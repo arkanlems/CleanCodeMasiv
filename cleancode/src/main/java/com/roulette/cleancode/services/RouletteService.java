@@ -1,4 +1,6 @@
 package com.roulette.cleancode.services;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.SetOptions;
 import com.google.cloud.firestore.WriteResult;
 import com.roulette.cleancode.firebase.FirebaseInitializer;
 import com.roulette.cleancode.models.Roulette;
@@ -33,19 +36,16 @@ public class RouletteService {
 	
 	@PostMapping("/open/{rouletteId}")
 	public boolean openRoulette(@PathVariable String rouletteId) {
-		DocumentReference addedDocRef = db.getFirebase().collection("roulettes").document(rouletteId);
-		ApiFuture<DocumentSnapshot> writeResult = addedDocRef.get();
+		Map<String, Object> update = new HashMap<>();
+		update.put("open", true);
+		ApiFuture<WriteResult> future = db.getFirebase().collection("roulettes").document(rouletteId).set(update,SetOptions.merge());
+		
 		try {
-			DocumentSnapshot document = writeResult.get();
-			Roulette roulette = document.toObject(Roulette.class);
-			roulette.setOpen(true);
-			//DocumentReference addedDocRef = db.getFirebase().collection("roulettes").document(rouletteId);
-			addedDocRef.set(roulette);
-			return true;
+			WriteResult result = future.get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return false;
+		return true;
 	}
 }
